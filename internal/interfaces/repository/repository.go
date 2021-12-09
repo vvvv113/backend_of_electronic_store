@@ -1,10 +1,12 @@
 package repository
 
-import "../../entities"
+import (
+	"backend/internal/entities"
+)
 
 type driver interface {
 	Add(product entities.Product) error
-	Get(productID string) (entities.Product, error)
+	Get(productID int) (entities.Product, error)
 	GetAll() ([]entities.Product, error)
 }
 
@@ -23,7 +25,7 @@ func (db *database) InsertProduct(product entities.Product) error {
 	return db.d.Add(product)
 }
 
-func (db *database) QueryProduct(productID string) (entities.Product, error) {
+func (db *database) QueryProduct(productID int) (entities.Product, error) {
 	return db.d.Get(productID)
 }
 

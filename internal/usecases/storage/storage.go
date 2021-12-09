@@ -1,18 +1,18 @@
-package usecases
+package storage
 
 import (
-	"../entities"
+	"backend/internal/entities"
 )
 
 type repository interface {
 	InsertProduct(product entities.Product) error
-	QueryProduct(productID string) (entities.Product, error)
+	QueryProduct(productID int) (entities.Product, error)
 	QueryProducts() ([]entities.Product, error)
 }
 
 type Controller interface {
 	AddProduct(product entities.Product) error
-	GetProduct(productID string) (entities.Product, error)
+	GetProduct(productID int) (entities.Product, error)
 	GetProducts() ([]entities.Product, error)
 }
 
@@ -30,7 +30,7 @@ func (app *application) AddProduct(product entities.Product) error {
 	return app.repo.InsertProduct(product)
 }
 
-func (app *application) GetProduct(productID string) (entities.Product, error) {
+func (app *application) GetProduct(productID int) (entities.Product, error) {
 	return app.repo.QueryProduct(productID)
 }
 
