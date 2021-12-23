@@ -2,8 +2,16 @@ package main
 
 import (
 	"backend/internal/infrastructure/mysql"
-	"encoding/json"
-	"fmt"
+	"backend/internal/interfaces/handlers"
+	"backend/internal/interfaces/repository"
+	"backend/internal/usecases/storage/product"
+	"backend/logger"
+	"context"
+	"github.com/gorilla/mux"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -15,19 +23,36 @@ func main() {
 		Database: "",
 	}
 
+	logger.Info.Print("Try to connect to db")
 	client, err := mysql.New(config)
 	if err != nil {
-		return
+		logger.Critical.Fatalf("Error during MySQL initialization")
 	}
 
-	// product := entities.Product{Name: "Iphone XE", Quantity: 10, Description: "test", Status: entities.Available, Price: 10000, Photo: "null"}
+	databaseRepository := repository.New(client)
+	applicationStorage := product.New(databaseRepository)
 
-	// client.Add(product)
-	product, _ := client.Get(1)
-	data, err := json.Marshal(product)
-	fmt.Println(string(data))
+	router := mux.NewRouter()
+	handlers.Make(router, applicationStorage)
+	srv := &http.Server{
+		Addr:    ":30003",
+		Handler: router,
+	}
 
-	products, _ := client.GetAll()
-	data, err = json.Marshal(products)
-	fmt.Println(string(data))
+	go func() {
+		listener := make(chan os.Signal, 1)
+		signal.Notify(listener, os.Interrupt, syscall.SIGTERM)
+		logger.Info.Println("Received a shutdown signal:", <-listener)
+
+		if err := srv.Shutdown(context.Background()); err != nil && err != http.ErrServerClosed {
+			logger.Error.Println("Failed to gracefully shutdown ", err)
+		}
+	}()
+
+	logger.Info.Println("[*]  Listening...")
+	if err := srv.ListenAndServe(); err != nil {
+		logger.Error.Println("Failed to listen and serve ", err)
+	}
+
+	logger.Critical.Fatal("Server shutdown")
 }

@@ -1,4 +1,4 @@
-package storage
+package product
 
 import (
 	"backend/internal/entities"
@@ -28,6 +28,7 @@ func New(repo repository) *application {
 
 func (app *application) AddProduct(product entities.Product) error {
 	return app.repo.InsertProduct(product)
+
 }
 
 func (app *application) GetProduct(productID int) (entities.Product, error) {

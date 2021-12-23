@@ -1,11 +1,10 @@
 package entities
 
-import "gorm.io/gorm"
-
 type Product struct {
-	gorm.Model
+	ID          int           `json:"id"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
+	CategoryID  int           `json:"category_id"`
 	Quantity    int           `json:"quantity"`
 	Status      ProductStatus `json:"status"`
 	Price       int           `json:"price"`
@@ -18,3 +17,8 @@ const (
 	Available ProductStatus = iota + 1
 	NotAvailable
 )
+
+type Category struct {
+	ID          int    `json:"id"`
+	Description string `json:"description"`
+}

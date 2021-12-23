@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"backend/internal/entities"
+	"backend/logger"
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -23,18 +24,11 @@ func New(cnfg *Config) (*dbClient, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", cnfg.User, cnfg.Password, cnfg.IP, cnfg.Port, cnfg.Database)
 	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-
+		logger.Critical.Fatalf("Failed to conect to Mongo %v", err)
 	}
-	Migration(conn)
-
 	return &dbClient{
 		client: conn,
 	}, nil
-}
-
-func Migration(db *gorm.DB) error {
-	err := db.AutoMigrate(&entities.Product{})
-	return err
 }
 
 func (mysql *dbClient) Add(product entities.Product) error {
