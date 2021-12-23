@@ -105,10 +105,11 @@ func createUser(app user.Controller) http.Handler {
 	})
 }
 
-func Make(r *mux.Router, controller product.Controller) {
+func Make(r *mux.Router, productApp product.Controller, userApp user.Controller) {
 	apiURI := "/api"
 	serviceRouter := r.PathPrefix(apiURI).Subrouter()
-	serviceRouter.Handle("/products", getAllProducts(controller)).Methods("GET")
-	serviceRouter.Handle("/products/{product_id}", getProduct(controller)).Methods("GET")
-	serviceRouter.Handle("/products", addProduct(controller)).Methods("POST")
+	serviceRouter.Handle("/products", getAllProducts(productApp)).Methods("GET")
+	serviceRouter.Handle("/products/{product_id}", getProduct(productApp)).Methods("GET")
+	serviceRouter.Handle("/products", addProduct(productApp)).Methods("POST")
+	serviceRouter.Handle("/users/create", createUser(userApp)).Methods("POST")
 }

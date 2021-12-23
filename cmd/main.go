@@ -4,7 +4,9 @@ import (
 	"backend/internal/infrastructure/mysql"
 	"backend/internal/interfaces/handlers"
 	productRepo "backend/internal/interfaces/repository/product"
+	userRepo "backend/internal/interfaces/repository/user"
 	"backend/internal/usecases/storage/product"
+	"backend/internal/usecases/storage/user"
 	"backend/logger"
 	"context"
 	"github.com/gorilla/mux"
@@ -29,11 +31,12 @@ func main() {
 		logger.Critical.Fatalf("Error during MySQL initialization")
 	}
 
-	databaseRepository := productRepo.New(client)
-	productStorage := product.New(databaseRepository)
+	productStorage := product.New(productRepo.New(client))
+
+	userStorage := user.New(userRepo.New(client))
 
 	router := mux.NewRouter()
-	handlers.Make(router, productStorage)
+	handlers.Make(router, productStorage, userStorage)
 	srv := &http.Server{
 		Addr:    ":30003",
 		Handler: router,
