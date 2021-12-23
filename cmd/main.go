@@ -3,7 +3,7 @@ package main
 import (
 	"backend/internal/infrastructure/mysql"
 	"backend/internal/interfaces/handlers"
-	"backend/internal/interfaces/repository"
+	productRepo "backend/internal/interfaces/repository/product"
 	"backend/internal/usecases/storage/product"
 	"backend/logger"
 	"context"
@@ -16,11 +16,11 @@ import (
 
 func main() {
 	var config = &mysql.Config{
-		IP:       "",
-		Port:     "",
-		User:     "",
-		Password: "",
-		Database: "",
+		IP:       "127.0.0.1",
+		Port:     "3306",
+		User:     "admin",
+		Password: "admin",
+		Database: "shop",
 	}
 
 	logger.Info.Print("Try to connect to db")
@@ -29,11 +29,11 @@ func main() {
 		logger.Critical.Fatalf("Error during MySQL initialization")
 	}
 
-	databaseRepository := repository.New(client)
-	applicationStorage := product.New(databaseRepository)
+	databaseRepository := productRepo.New(client)
+	productStorage := product.New(databaseRepository)
 
 	router := mux.NewRouter()
-	handlers.Make(router, applicationStorage)
+	handlers.Make(router, productStorage)
 	srv := &http.Server{
 		Addr:    ":30003",
 		Handler: router,

@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"backend/internal/entities"
 	"backend/logger"
 	"fmt"
 	"gorm.io/driver/mysql"
@@ -31,19 +30,17 @@ func New(cnfg *Config) (*dbClient, error) {
 	}, nil
 }
 
-func (mysql *dbClient) Add(product entities.Product) error {
-	result := mysql.client.Create(&product)
+func (mysql *dbClient) Create(obj interface{}) error {
+	result := mysql.client.Create(obj)
 	return result.Error
 }
 
-func (mysql *dbClient) Get(productID int) (entities.Product, error) {
-	var product entities.Product
-	result := mysql.client.First(&product, productID)
-	return product, result.Error
+func (mysql *dbClient) FindAll(obj interface{}) error {
+	result := mysql.client.Find(obj)
+	return result.Error
 }
 
-func (mysql *dbClient) GetAll() ([]entities.Product, error) {
-	var products []entities.Product
-	result := mysql.client.Find(&products)
-	return products, result.Error
+func (mysql *dbClient) FindByParameters(searchObj interface{}, obj interface{}) error {
+	result := mysql.client.Where(searchObj).First(obj)
+	return result.Error
 }
