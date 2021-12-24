@@ -11,6 +11,7 @@ type driver interface {
 	FindAll(obj interface{}) error
 	FindByParameters(searchObj interface{}, obj interface{}, isAll bool) error
 	FindByID(ID int, obj interface{}) error
+	Update(obj interface{}, key string, value string) error
 }
 
 type database struct {
@@ -87,4 +88,31 @@ func (db *database) QueryOrders(userID int) ([]entities.Order, error) {
 		return []entities.Order{}, err
 	}
 	return result, nil
+}
+
+func (db *database) UpdateOrder(orderID int, userID int, key string, value string) error {
+	var order entities.Order
+
+	type OrderQuery struct {
+		ID     int
+		UserID int
+	}
+
+	orderQuery := OrderQuery{
+		ID:     orderID,
+		UserID: userID,
+	}
+
+	err := db.d.FindByParameters(&orderQuery, &order, false)
+	if err != nil {
+		logger.Error.Printf("Failed to find order. Error: %s", err)
+		return err
+	}
+
+	err = db.d.Update(&order, key, value)
+	if err != nil {
+		logger.Error.Printf("Error during updating parameter %s . Error: %s", key, err)
+		return err
+	}
+	return nil
 }

@@ -54,3 +54,8 @@ func (mysql *dbClient) FindByID(ID int, obj interface{}) error {
 	result := mysql.client.Where("id = ?", ID).First(obj)
 	return result.Error
 }
+
+func (mysql *dbClient) Update(obj interface{}, key string, value string) error {
+	result := mysql.client.Model(obj).Update(key, value)
+	return result.Error
+}

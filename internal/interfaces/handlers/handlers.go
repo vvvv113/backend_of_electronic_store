@@ -274,6 +274,61 @@ func getOrder(app order.Controller) http.Handler {
 	})
 }
 
+func updateStatus(app order.Controller) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errorMessage := "Error getting profile"
+		cookie, err := r.Cookie("user_id")
+
+		if err != nil {
+			logger.Error.Printf("Failed to get userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		userID, err := strconv.Atoi(cookie.Value)
+		orderID, err := strconv.Atoi(mux.Vars(r)[orderID])
+
+		if err != nil {
+			logger.Error.Printf("Failed to parse userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info.Printf("Got new request for updating status of order with id %d from user with id %s", orderID, cookie.Value)
+
+		type Body struct {
+			Status string
+		}
+
+		var statusStruct Body
+
+		err = json.NewDecoder(r.Body).Decode(&statusStruct)
+
+		if err != nil {
+			logger.Error.Printf("Failed to decode status. Got %v", err)
+			http.Error(w, errorMessage, http.StatusBadRequest)
+			return
+		}
+
+		var status entities.OrderStatus
+		switch statusStruct.Status {
+		case "cancel":
+			status = entities.Canceled
+		case "pay":
+			status = entities.Done
+		default:
+			http.Error(w, "Wrong status", http.StatusInternalServerError)
+		}
+
+		err = app.ChangeStatus(orderID, userID, status)
+		if err != nil {
+			logger.Error.Printf(err.Error())
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
 func Make(r *mux.Router, productApp product.Controller, userApp user.Controller, orderApp order.Controller) {
 	apiURI := "/api"
 	serviceRouter := r.PathPrefix(apiURI).Subrouter()
@@ -286,4 +341,5 @@ func Make(r *mux.Router, productApp product.Controller, userApp user.Controller,
 	serviceRouter.Handle("/orders", createOrder(orderApp)).Methods("POST")
 	serviceRouter.Handle("/orders", getOrders(orderApp)).Methods("GET")
 	serviceRouter.Handle("/orders/{order_id}", getOrder(orderApp)).Methods("GET")
+	serviceRouter.Handle("/orders/{order_id}", updateStatus(orderApp)).Methods("PUT")
 }

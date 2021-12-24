@@ -3,6 +3,7 @@ package order
 import (
 	"backend/internal/entities"
 	"backend/logger"
+	"fmt"
 )
 
 type repository interface {
@@ -10,6 +11,7 @@ type repository interface {
 	InsertItem(item entities.Item) error
 	QueryOrder(orderID int, userID int) (OrderWithItems, error)
 	QueryOrders(userID int) ([]entities.Order, error)
+	UpdateOrder(orderID int, userID int, key string, value string) error
 }
 
 type Controller interface {
@@ -17,6 +19,7 @@ type Controller interface {
 	GetOrders(userID int) ([]entities.Order, error)
 	GetOrder(orderID int, userID int) (OrderWithItems, error)
 	AddItem(item entities.Item) error
+	ChangeStatus(orderID int, userID int, status entities.OrderStatus) error
 }
 
 type application struct {
@@ -58,4 +61,8 @@ func (app *application) GetOrders(userID int) ([]entities.Order, error) {
 
 func (app *application) AddItem(item entities.Item) error {
 	return app.repo.InsertItem(item)
+}
+
+func (app *application) ChangeStatus(orderID int, userID int, status entities.OrderStatus) error {
+	return app.repo.UpdateOrder(orderID, userID, "status", fmt.Sprintf("%d", status))
 }
