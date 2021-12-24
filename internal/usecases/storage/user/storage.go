@@ -2,6 +2,8 @@ package user
 
 import (
 	"backend/internal/entities"
+	"backend/logger"
+	"fmt"
 )
 
 type repository interface {
@@ -12,13 +14,18 @@ type repository interface {
 
 type Controller interface {
 	CreateUser(user entities.User) error
-	Login(email string, password string) (Credentials, error)
+	Login(credentials Credentials) (Cookies, error)
 	GetProfile(userID int) (entities.User, error)
 }
 
-type Credentials struct {
+type Cookies struct {
 	UserID int    `json:"user_id"`
 	Token  string `json:"token"`
+}
+
+type Credentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type application struct {
@@ -35,17 +42,18 @@ func (app *application) CreateUser(user entities.User) error {
 	return app.repo.InsertUser(user)
 }
 
-func (app *application) Login(email string, password string) (Credentials, error) {
-	user, err := app.repo.FindUserByEmail(email)
+func (app *application) Login(credentials Credentials) (Cookies, error) {
+	user, err := app.repo.FindUserByEmail(credentials.Email)
 	if err != nil {
-		return Credentials{}, err
+		logger.Error.Println(err)
+		return Cookies{}, fmt.Errorf("Account didn't found try again")
 	}
 
-	if password != user.Password {
-		return Credentials{}, err
+	if credentials.Password != user.Password {
+		return Cookies{}, fmt.Errorf("Wrong email or password. Try again")
 	}
 
-	return Credentials{UserID: user.ID, Token: "random"}, nil
+	return Cookies{UserID: user.ID, Token: "random"}, nil
 }
 
 func (app *application) GetProfile(userID int) (entities.User, error) {
