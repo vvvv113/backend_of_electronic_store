@@ -7,7 +7,7 @@ type Order struct {
 }
 
 type Item struct {
-	OrderID   int
+	OrderID   int `json:"order_id"`
 	ProductID int `json:"product_id"`
 	Quantity  int `json:"quantity"`
 }
