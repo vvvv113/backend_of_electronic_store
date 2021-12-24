@@ -1,17 +1,15 @@
 package entities
 
 type Order struct {
-	ID        int         `json:"id"`
-	UserID    int         `json:"user_id"`
-	Status    OrderStatus `json:"status"`
-	Items     []Item
-	CreatedAt string `json:"created_at"`
+	ID     int         `json:"id"`
+	UserID int         `json:"user_id"`
+	Status OrderStatus `json:"status"`
 }
 
 type Item struct {
-	ProductID int
-
-	Quantity int `json:"quantity"`
+	OrderID   int
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
 }
 
 type OrderStatus int

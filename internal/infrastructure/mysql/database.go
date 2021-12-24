@@ -40,7 +40,17 @@ func (mysql *dbClient) FindAll(obj interface{}) error {
 	return result.Error
 }
 
-func (mysql *dbClient) FindByParameters(searchObj interface{}, obj interface{}) error {
-	result := mysql.client.Where(searchObj).First(obj)
+func (mysql *dbClient) FindByParameters(searchObj interface{}, obj interface{}, isAll bool) error {
+	var result *gorm.DB
+	if isAll {
+		result = mysql.client.Where(searchObj).Find(obj)
+	} else {
+		result = mysql.client.Where(searchObj).First(obj)
+	}
+	return result.Error
+}
+
+func (mysql *dbClient) FindByID(ID int, obj interface{}) error {
+	result := mysql.client.Where("id = ?", ID).First(obj)
 	return result.Error
 }

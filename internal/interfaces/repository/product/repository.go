@@ -8,7 +8,8 @@ import (
 type driver interface {
 	Create(obj interface{}) error
 	FindAll(obj interface{}) error
-	FindByParameters(searchObj interface{}, obj interface{}) error
+	FindByParameters(searchObj interface{}, obj interface{}, isAll bool) error
+	FindByID(ID int, obj interface{}) error
 }
 
 type database struct {
@@ -27,15 +28,8 @@ func (db *database) InsertProduct(product entities.Product) error {
 }
 
 func (db *database) QueryProduct(productID int) (entities.Product, error) {
-	type Query struct {
-		ID int
-	}
-	query := Query{
-		ID: productID,
-	}
-
 	var result entities.Product
-	err := db.d.FindByParameters(&query, &result)
+	err := db.d.FindByID(productID, &result)
 	if err != nil {
 		logger.Error.Printf("Error during getting product: %s", err.Error())
 		return entities.Product{}, err

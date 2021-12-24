@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"backend/internal/entities"
+	"backend/internal/usecases/storage/order"
 	"backend/internal/usecases/storage/product"
 	"backend/internal/usecases/storage/user"
 	"backend/logger"
@@ -167,7 +168,48 @@ func getProfile(app user.Controller) http.Handler {
 	})
 }
 
-func Make(r *mux.Router, productApp product.Controller, userApp user.Controller) {
+func createOrder(app order.Controller) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errorMessage := "Error getting profile"
+		cookie, err := r.Cookie("user_id")
+
+		if err != nil {
+			logger.Error.Printf("Failed to get userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		userID, err := strconv.Atoi(cookie.Value)
+		if err != nil {
+			logger.Error.Printf("Failed to parse userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info.Printf("Got new request to create order from user with id %s", cookie.Value)
+
+		var item entities.Item
+		err = json.NewDecoder(r.Body).Decode(&item)
+
+		if err != nil {
+			logger.Error.Printf("Failed to decode item. Got %v", err)
+			http.Error(w, errorMessage, http.StatusBadRequest)
+			return
+		}
+
+		err = app.CreateOrder(userID, item)
+
+		if err != nil {
+			logger.Error.Printf(err.Error())
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+	})
+}
+
+func Make(r *mux.Router, productApp product.Controller, userApp user.Controller, orderApp order.Controller) {
 	apiURI := "/api"
 	serviceRouter := r.PathPrefix(apiURI).Subrouter()
 	serviceRouter.Handle("/products", getAllProducts(productApp)).Methods("GET")
@@ -176,4 +218,5 @@ func Make(r *mux.Router, productApp product.Controller, userApp user.Controller)
 	serviceRouter.Handle("/users/create", createUser(userApp)).Methods("POST")
 	serviceRouter.Handle("/users/login", login(userApp)).Methods("POST")
 	serviceRouter.Handle("/users/profile", getProfile(userApp)).Methods("GET")
+	serviceRouter.Handle("/orders", createOrder(orderApp)).Methods("POST")
 }

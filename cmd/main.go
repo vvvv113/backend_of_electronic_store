@@ -3,8 +3,10 @@ package main
 import (
 	"backend/internal/infrastructure/mysql"
 	"backend/internal/interfaces/handlers"
+	orderRepo "backend/internal/interfaces/repository/order"
 	productRepo "backend/internal/interfaces/repository/product"
 	userRepo "backend/internal/interfaces/repository/user"
+	"backend/internal/usecases/storage/order"
 	"backend/internal/usecases/storage/product"
 	"backend/internal/usecases/storage/user"
 	"backend/logger"
@@ -32,11 +34,11 @@ func main() {
 	}
 
 	productStorage := product.New(productRepo.New(client))
-
 	userStorage := user.New(userRepo.New(client))
+	orderStorage := order.New(orderRepo.New(client))
 
 	router := mux.NewRouter()
-	handlers.Make(router, productStorage, userStorage)
+	handlers.Make(router, productStorage, userStorage, orderStorage)
 	srv := &http.Server{
 		Addr:    ":30003",
 		Handler: router,
