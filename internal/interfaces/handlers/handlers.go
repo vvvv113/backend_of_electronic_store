@@ -19,6 +19,7 @@ type Controllers struct {
 
 const (
 	productID = "product_id"
+	orderID   = "order_id"
 )
 
 func getAllProducts(app product.Controller) http.Handler {
@@ -204,8 +205,72 @@ func createOrder(app order.Controller) http.Handler {
 			http.Error(w, errorMessage, http.StatusInternalServerError)
 			return
 		}
+	})
+}
+
+func getOrders(app order.Controller) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errorMessage := "Error getting profile"
+		cookie, err := r.Cookie("user_id")
+
+		if err != nil {
+			logger.Error.Printf("Failed to get userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		userID, err := strconv.Atoi(cookie.Value)
+		if err != nil {
+			logger.Error.Printf("Failed to parse userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info.Printf("Got new request to get all orders from user with id %s", cookie.Value)
+
+		orders, err := app.GetOrders(userID)
+		if err != nil {
+			logger.Error.Printf(err.Error())
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(orders)
+	})
+}
+
+func getOrder(app order.Controller) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		errorMessage := "Error getting profile"
+		cookie, err := r.Cookie("user_id")
+
+		if err != nil {
+			logger.Error.Printf("Failed to get userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		userID, err := strconv.Atoi(cookie.Value)
+		orderID, err := strconv.Atoi(mux.Vars(r)[orderID])
+
+		if err != nil {
+			logger.Error.Printf("Failed to parse userID. Got %v", err)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		logger.Info.Printf("Got new request to get order with id %d from user with id %s", orderID, cookie.Value)
+
+		order, err := app.GetOrder(orderID, userID)
+		if err != nil {
+			logger.Error.Printf(err.Error())
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(order)
 	})
 }
 
@@ -219,4 +284,6 @@ func Make(r *mux.Router, productApp product.Controller, userApp user.Controller,
 	serviceRouter.Handle("/users/login", login(userApp)).Methods("POST")
 	serviceRouter.Handle("/users/profile", getProfile(userApp)).Methods("GET")
 	serviceRouter.Handle("/orders", createOrder(orderApp)).Methods("POST")
+	serviceRouter.Handle("/orders", getOrders(orderApp)).Methods("GET")
+	serviceRouter.Handle("/orders/{order_id}", getOrder(orderApp)).Methods("GET")
 }

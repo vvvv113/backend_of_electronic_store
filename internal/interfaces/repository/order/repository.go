@@ -28,9 +28,20 @@ func (db *database) InsertOrder(order entities.Order) (int, error) {
 	return order.ID, db.d.Create(&order)
 }
 
-func (db *database) QueryOrder(orderID int) (storage.OrderWithItems, error) {
+func (db *database) QueryOrder(orderID int, userID int) (storage.OrderWithItems, error) {
 	var order entities.Order
-	err := db.d.FindByID(orderID, order)
+
+	type OrderQuery struct {
+		ID     int
+		UserID int
+	}
+
+	orderQuery := OrderQuery{
+		ID:     orderID,
+		UserID: userID,
+	}
+
+	err := db.d.FindByParameters(&orderQuery, &order, false)
 	if err != nil {
 		logger.Error.Printf("Failed to find order. Error: %s", err)
 		return storage.OrderWithItems{}, err
@@ -38,15 +49,16 @@ func (db *database) QueryOrder(orderID int) (storage.OrderWithItems, error) {
 
 	type Query struct {
 		OrderID int
+		UserID  int
 	}
 
-	query := Query{
+	itemQuery := Query{
 		OrderID: orderID,
 	}
 
 	var items []entities.Item
 
-	err = db.d.FindByParameters(&query, &items, true)
+	err = db.d.FindByParameters(&itemQuery, &items, true)
 	if err != nil {
 		logger.Error.Printf("Failed to find items. Error: %s", err)
 		return storage.OrderWithItems{}, err

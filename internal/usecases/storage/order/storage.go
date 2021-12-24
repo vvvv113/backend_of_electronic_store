@@ -8,14 +8,14 @@ import (
 type repository interface {
 	InsertOrder(order entities.Order) (int, error)
 	InsertItem(item entities.Item) error
-	QueryOrder(orderID int) (OrderWithItems, error)
+	QueryOrder(orderID int, userID int) (OrderWithItems, error)
 	QueryOrders(userID int) ([]entities.Order, error)
 }
 
 type Controller interface {
 	CreateOrder(userID int, item entities.Item) error
 	GetOrders(userID int) ([]entities.Order, error)
-	GetOrder(orderID int) (OrderWithItems, error)
+	GetOrder(orderID int, userID int) (OrderWithItems, error)
 	AddItem(item entities.Item) error
 }
 
@@ -48,8 +48,8 @@ func (app *application) CreateOrder(userID int, item entities.Item) error {
 	return app.repo.InsertItem(item)
 }
 
-func (app *application) GetOrder(orderID int) (OrderWithItems, error) {
-	return app.repo.QueryOrder(orderID)
+func (app *application) GetOrder(orderID int, userID int) (OrderWithItems, error) {
+	return app.repo.QueryOrder(orderID, userID)
 }
 
 func (app *application) GetOrders(userID int) ([]entities.Order, error) {
