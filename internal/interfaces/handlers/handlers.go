@@ -169,7 +169,7 @@ func getProfile(app user.Controller) http.Handler {
 	})
 }
 
-func createOrder(app order.Controller) http.Handler {
+func addToCart(app order.Controller) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		errorMessage := "Error getting profile"
 		cookie, err := r.Cookie("user_id")
@@ -187,7 +187,7 @@ func createOrder(app order.Controller) http.Handler {
 			return
 		}
 
-		logger.Info.Printf("Got new request to create order from user with id %s", cookie.Value)
+		logger.Info.Printf("Got new request for adding product to cart from user with id %s", cookie.Value)
 
 		var item entities.Item
 		err = json.NewDecoder(r.Body).Decode(&item)
@@ -198,7 +198,7 @@ func createOrder(app order.Controller) http.Handler {
 			return
 		}
 
-		err = app.CreateOrder(userID, item)
+		err = app.AddToCart(userID, item)
 
 		if err != nil {
 			logger.Error.Printf(err.Error())
@@ -338,7 +338,7 @@ func Make(r *mux.Router, productApp product.Controller, userApp user.Controller,
 	serviceRouter.Handle("/users/create", createUser(userApp)).Methods("POST")
 	serviceRouter.Handle("/users/login", login(userApp)).Methods("POST")
 	serviceRouter.Handle("/users/profile", getProfile(userApp)).Methods("GET")
-	serviceRouter.Handle("/orders", createOrder(orderApp)).Methods("POST")
+	serviceRouter.Handle("/orders", addToCart(orderApp)).Methods("POST")
 	serviceRouter.Handle("/orders", getOrders(orderApp)).Methods("GET")
 	serviceRouter.Handle("/orders/{order_id}", getOrder(orderApp)).Methods("GET")
 	serviceRouter.Handle("/orders/{order_id}", updateStatus(orderApp)).Methods("PUT")

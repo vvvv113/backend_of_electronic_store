@@ -12,13 +12,13 @@ type repository interface {
 	QueryOrder(orderID int, userID int) (OrderWithItems, error)
 	QueryOrders(userID int) ([]entities.Order, error)
 	UpdateOrder(orderID int, userID int, key string, value string) error
+	FindOrderByParam(obj interface{}) (int, error)
 }
 
 type Controller interface {
-	CreateOrder(userID int, item entities.Item) error
+	AddToCart(userID int, item entities.Item) error
 	GetOrders(userID int) ([]entities.Order, error)
 	GetOrder(orderID int, userID int) (OrderWithItems, error)
-	AddItem(item entities.Item) error
 	ChangeStatus(orderID int, userID int, status entities.OrderStatus) error
 }
 
@@ -37,17 +37,26 @@ type OrderWithItems struct {
 	Items []entities.Item
 }
 
-func (app *application) CreateOrder(userID int, item entities.Item) error {
-	order := entities.Order{
-		UserID: userID,
-		Status: entities.InProgress,
-	}
-	id, err := app.repo.InsertOrder(order)
-	if err != nil {
-		logger.Error.Printf("Failed to create Order. Error: %s", err)
+type OrderQuery struct {
+	UserID int
+	Status entities.OrderStatus
+}
+
+func (app *application) AddToCart(userID int, item entities.Item) error {
+	inProgressOrderID, err := app.repo.FindOrderByParam(OrderQuery{UserID: userID, Status: entities.InProgress})
+	if inProgressOrderID == 0 {
+		order := entities.Order{
+			UserID: userID,
+			Status: entities.InProgress,
+		}
+		item.OrderID, err = app.repo.InsertOrder(order)
+		if err != nil {
+			logger.Error.Printf("Failed to create Order. Error: %s", err)
+		}
+	} else {
+		item.OrderID = inProgressOrderID
 	}
 
-	item.OrderID = id
 	return app.repo.InsertItem(item)
 }
 

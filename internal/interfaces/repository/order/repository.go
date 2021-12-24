@@ -29,6 +29,10 @@ func (db *database) InsertOrder(order entities.Order) (int, error) {
 	return order.ID, db.d.Create(&order)
 }
 
+func (db *database) InsertItem(item entities.Item) error {
+	return db.d.Create(&item)
+}
+
 func (db *database) QueryOrder(orderID int, userID int) (storage.OrderWithItems, error) {
 	var order entities.Order
 
@@ -66,10 +70,6 @@ func (db *database) QueryOrder(orderID int, userID int) (storage.OrderWithItems,
 	}
 
 	return storage.OrderWithItems{Order: order, Items: items}, nil
-}
-
-func (db *database) InsertItem(item entities.Item) error {
-	return db.d.Create(&item)
 }
 
 func (db *database) QueryOrders(userID int) ([]entities.Order, error) {
@@ -115,4 +115,14 @@ func (db *database) UpdateOrder(orderID int, userID int, key string, value strin
 		return err
 	}
 	return nil
+}
+
+func (db *database) FindOrderByParam(searchObj interface{}) (int, error) {
+	var order entities.Order
+	err := db.d.FindByParameters(&searchObj, &order, false)
+	logger.Info.Println(order)
+	if err != nil {
+		return 0, err
+	}
+	return order.ID, nil
 }
